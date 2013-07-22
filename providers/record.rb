@@ -11,8 +11,8 @@ def load_current_resource
     zone_name += '.' unless zone_name[-1] == '.'
     Chef::Log.info "Looking up zone ID by name #{zone_name}"
     @zone_details = @route53.list_hosted_zones().find { |z| z[:name] == zone_name }
-    raise "Unable to find zone ID by name #{@new_resource.zone_name}" if zone_details.nil?
-    @zone_id = zone_details[:aws_id]
+    raise "Unable to find zone ID by name #{@new_resource.zone_name}" if @zone_details.nil?
+    @zone_id = @zone_details[:aws_id]
   else
     @zone_details = @route53.get_hosted_zone(@zone_id)
   end
