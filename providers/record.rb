@@ -37,8 +37,36 @@ end
 
 action :create do
   if @current_resource.exists
-    Chef::Log.info "Current resource: #{@current_resource} #{@current_resource.value}"
-    Chef::Log.info "Not creating a new resource."
+    if @new_resource.update
+      if @current_resource.type == @new_resource.type ||
+        @current_resource.ttl != @new_resource.ttl ||
+        @current_resource.value != @new_resource.value
+        converge_by("Update #{@new_resource}") do
+          Chef::Log.info "Updating resource: #{@current_resource}"
+          resource_record_sets = [
+            {
+              :action => :delete,
+              :name => @record_fullname,
+              :type => @current_resource.type,
+              :ttl => @current_resource.ttl,
+              :resource_records => @current_resource.value.split(',').collect { |s| s.strip() }
+            },
+            {
+              :action => :create,
+              :name => @record_fullname,
+              :type => @new_resource.type,
+              :ttl => @new_resource.ttl,
+              :resource_records => @new_resource.value.split(',').collect { |s| s.strip() }
+            }
+          ]
+          change_id = @route53.change_resource_record_sets(@zone_id, resource_record_sets)[:aws_id]
+          pp @route53.get_change(change_id)[:status]
+        end
+      end
+    else
+      Chef::Log.info "Current resource: #{@current_resource} #{@current_resource.value}"
+      Chef::Log.info "Not creating a new resource."
+    end
   else
     converge_by("Create #{@new_resource}") do
       Chef::Log.info "No such resource: #{@current_resource}"
