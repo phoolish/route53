@@ -38,7 +38,7 @@ end
 action :create do
   if @current_resource.exists
     if @new_resource.update
-      if @current_resource.type == @new_resource.type ||
+      if @current_resource.type != @new_resource.type ||
         @current_resource.ttl != @new_resource.ttl ||
         @current_resource.value != @new_resource.value
         converge_by("Update #{@new_resource}") do
